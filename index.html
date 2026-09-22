@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#1e1230">
+<title>CoupleGoAI Roulette</title>
+<style>
+:root{--bg:#1e1230;--plum:#2b1a43;--pink:#b94f70;--signal:#f48ba6;--orchid:#cc7be8;--size:min(88vw,72dvh,680px)}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;min-height:100%;overflow:hidden}
+body{min-height:100vh;min-height:100dvh;display:grid;place-items:center;background:radial-gradient(circle at 12% 8%,rgba(244,139,166,.2),transparent 42%),radial-gradient(circle at 88% 92%,rgba(204,123,232,.18),transparent 44%),var(--bg);font-family:ui-rounded,"SF Pro Rounded","Nunito Sans",system-ui,-apple-system,sans-serif;color:#fff;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+main{width:100%;min-height:100vh;min-height:100dvh;padding:max(18px,env(safe-area-inset-top)) 18px max(22px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px}
+.roulette{position:relative;width:var(--size);height:var(--size)}
+.roulette:before{content:"";position:absolute;inset:3.5%;border-radius:50%;box-shadow:0 24px 55px rgba(0,0,0,.48)}
+.pointer{position:absolute;z-index:3;top:-5px;left:50%;width:46px;height:52px;transform:translateX(-50%);background:var(--signal);clip-path:polygon(50% 100%,0 0,100% 0);filter:drop-shadow(0 7px 9px rgba(0,0,0,.35))}
+.rim{position:absolute;inset:0;border-radius:50%;padding:8px;background:linear-gradient(135deg,var(--signal),var(--orchid));box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.wheel{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;background:repeating-conic-gradient(from 0deg,var(--plum) 0deg 45deg,var(--pink) 45deg 90deg);border:14px solid var(--bg);transform:rotate(0deg);will-change:transform}
+.wheel:after{content:"";position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from 0deg,transparent 0deg 44.3deg,rgba(30,18,48,.95) 44.3deg 45deg);pointer-events:none}
+.label{position:absolute;z-index:2;left:50%;top:50%;width:138px;margin-left:-69px;text-align:center;font-size:clamp(12px,2.15vw,20px);font-weight:800;line-height:1.05;text-shadow:0 1px 5px rgba(0,0,0,.28);transform-origin:50% 0}
+.label span{display:block}
+.l0{transform:rotate(22.5deg) translateY(calc(var(--size)*-.36)) rotate(90deg)}
+.l1{transform:rotate(67.5deg) translateY(calc(var(--size)*-.36)) rotate(90deg)}
+.l2{transform:rotate(112.5deg) translateY(calc(var(--size)*-.36)) rotate(90deg)}
+.l3{transform:rotate(157.5deg) translateY(calc(var(--size)*-.36)) rotate(90deg)}
+.l4{transform:rotate(202.5deg) translateY(calc(var(--size)*-.36)) rotate(90deg)}
+.l5{transform:rotate(247.5deg) translateY(calc(var(--size)*-.36)) rotate(90deg)}
+.l6{transform:rotate(292.5deg) translateY(calc(var(--size)*-.36)) rotate(90deg)}
+.l7{transform:rotate(337.5deg) translateY(calc(var(--size)*-.36)) rotate(90deg)}
+.hub{position:absolute;z-index:4;inset:50% auto auto 50%;width:112px;height:112px;transform:translate(-50%,-50%);border-radius:50%;display:grid;place-items:center;background:#fff;border:7px solid var(--bg);color:var(--pink);font-size:68px;font-weight:700;line-height:1;box-shadow:0 8px 22px rgba(0,0,0,.22)}
+button{min-width:220px;min-height:60px;padding:0 34px;border:0;border-radius:999px;background:linear-gradient(135deg,#b94f70,#8f4aaa);color:#fff;font:800 1.1rem ui-rounded,"SF Pro Rounded",system-ui,-apple-system,sans-serif;cursor:pointer;box-shadow:0 13px 32px rgba(143,74,170,.3);transition:transform .18s ease,opacity .18s ease}
+button:hover:not(:disabled){transform:translateY(-2px)}
+button:active:not(:disabled){transform:scale(.98)}
+button:disabled{opacity:.68;cursor:default}
+@media(max-height:650px){:root{--size:min(72vw,68dvh,520px)}main{gap:12px}button{min-height:52px}}
+@media(prefers-reduced-motion:reduce){button{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <div class="roulette" aria-label="Couple challenge roulette">
+    <div class="pointer" aria-hidden="true"></div>
+    <div class="rim">
+      <div class="wheel" id="wheel">
+        <div class="label l0"><span>Mirror Me</span></div>
+        <div class="label l1"><span>Team</span><span>Countdown</span></div>
+        <div class="label l2"><span>Copy My</span><span>Face</span></div>
+        <div class="label l3"><span>Secret</span><span>Handshake</span></div>
+        <div class="label l4"><span>Back to</span><span>Back</span></div>
+        <div class="label l5"><span>Team</span><span>Alphabet</span></div>
+        <div class="label l6"><span>Who Knows</span><span>Who?</span></div>
+        <div class="label l7"><span>Blind</span><span>High Five</span></div>
+      </div>
+    </div>
+    <div class="hub" aria-hidden="true">♡</div>
+  </div>
+  <button id="spin" type="button">Spin ✨</button>
+</main>
+<script>
+const items=["Mirror Me","Team Countdown","Copy My Face","Secret Handshake","Back to Back","Team Alphabet","Who Knows Who?","Blind High Five"];
+const wheel=document.getElementById("wheel");
+const button=document.getElementById("spin");
+const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+let rotation=0,last=-1,busy=false;
+
+button.addEventListener("click",()=>{
+  if(busy)return;
+  busy=true;
+  button.disabled=true;
+  let index;
+  do index=Math.floor(Math.random()*items.length); while(items.length>1&&index===last);
+  last=index;
+
+  const step=360/items.length;
+  const midpoint=index*step+step/2;
+  const jitter=(Math.random()-.5)*step*.55;
+  const current=((rotation%360)+360)%360;
+  const target=((360-midpoint-jitter)%360+360)%360;
+  let delta=target-current;
+  if(delta<0)delta+=360;
+  rotation+=((reduced?1:5+Math.floor(Math.random()*2))*360)+delta;
+
+  wheel.style.transition=reduced?"transform .8s cubic-bezier(.2,.8,.2,1)":"transform 4.3s cubic-bezier(.12,.72,.06,1)";
+  wheel.style.transform=`rotate(${rotation}deg)`;
+
+  setTimeout(()=>{
+    button.textContent=items[index];
+    button.disabled=false;
+    busy=false;
+  },reduced?850:4350);
+});
+
+document.addEventListener("gesturestart",e=>e.preventDefault());
+document.addEventListener("touchmove",e=>{if(e.scale&&e.scale!==1)e.preventDefault()},{passive:false});
+</script>
+</body>
+</html>
