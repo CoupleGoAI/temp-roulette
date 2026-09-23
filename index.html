@@ -47,26 +47,21 @@
     </section>
 
     <section class="screen" id="screen-challenge" data-step="challenge">
-      <div class="card">
-        <span class="badge" id="chBadge">Quick · 20 seconds</span>
+      <div class="card challenge-card">
+        <span class="badge" id="chBadge">Your challenge</span>
         <h2 class="title" id="chTitle">Mirror Me</h2>
-        <p class="lead" id="chText"></p>
-        <div class="timer" id="timer">
-          <svg viewBox="0 0 200 200" aria-hidden="true">
-            <defs>
-              <linearGradient id="timerGrad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#f48ba6"/><stop offset="1" stop-color="#cc7be8"/>
-              </linearGradient>
-            </defs>
-            <circle class="timer-track" cx="100" cy="100" r="88"/>
-            <circle class="timer-ring" id="timerRing" cx="100" cy="100" r="88"/>
-          </svg>
-          <div class="timer-num" id="timerNum">20</div>
+        <p class="lead challenge-text" id="chText"></p>
+
+        <div class="proof-note">
+          <div class="proof-icon" aria-hidden="true">📸</div>
+          <div class="proof-copy">
+            <strong>Capture the moment</strong>
+            <p>Take a photo of yourselves completing the challenge with your own phone, then show it to the CoupleGoAI host.</p>
+          </div>
         </div>
-        <p class="timer-hint" id="timerHint">Ready? Tap start when you both are.</p>
+
         <div class="actions">
-          <button class="btn-primary" id="chPrimary">Start the timer</button>
-          <button class="btn-link" id="chSkip">Skip this one → spin again</button>
+          <button class="btn-link" id="chSkip">Spin again</button>
         </div>
       </div>
     </section>
