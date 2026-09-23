@@ -52,7 +52,7 @@
   .grainient-bg {
     position: fixed;
     inset: 0;
-    z-index: -3;
+    z-index: 0;
     width: 100%;
     height: 100%;
     display: block;
@@ -62,7 +62,7 @@
   .background-vignette {
     position: fixed;
     inset: 0;
-    z-index: -2;
+    z-index: 1;
     pointer-events: none;
     background:
       radial-gradient(circle at 50% 45%, rgba(30, 18, 48, 0.05) 0%, rgba(30, 18, 48, 0.18) 48%, rgba(13, 8, 24, 0.58) 100%),
@@ -71,7 +71,7 @@
 
   .app {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     min-height: 100vh;
     min-height: 100dvh;
     display: flex;
