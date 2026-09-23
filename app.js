@@ -15,10 +15,12 @@ const CHALLENGES = [
 ];
 
 
-const SPIN_TURNS = 5;          // full rotations per spin
-const SPIN_MS = 4300;          // spin duration
-const LAND_PAUSE_MS = 1100;    // how long the winning slice is highlighted before moving on
-const IDLE_DEG_PER_S = 5;      // slow attract rotation while waiting
+const SPIN_TURNS_MIN = 5;       // minimum full rotations before landing
+const SPIN_TURNS_MAX = 6;       // maximum full rotations before landing
+const COULOMB_DECEL = 36;       // deg/s²: bearing friction, dominant near the end
+const VISCOUS_DRAG = 0.55;      // 1/s: speed-proportional drag, dominant while spinning fast
+const LAND_PAUSE_MS = 1100;     // how long the winning slice is highlighted before moving on
+const IDLE_DEG_PER_S = 5;       // slow attract rotation while waiting
 
 /* ═══════════════════════════════════════════════════════════════════ */
 
@@ -129,12 +131,35 @@ function setRot(w) { w.g.setAttribute("transform", `rotate(${w.rot} ${C} ${C})`)
 
 function tick(w, now) {
   if (w.anim) {
-    const { t0, dur, from, to, resolve } = w.anim;
-    const p = Math.min(1, (now - t0) / dur);
-    const e = 1 - Math.pow(1 - p, 4);
-    w.rot = from + (to - from) * e;
-    setRot(w);
-    if (p >= 1) { w.anim = null; resolve(); }
+    const anim = w.anim;
+
+    if (anim.kind === "physics") {
+      const elapsed = Math.min((now - anim.t0) / 1000, anim.stopTime);
+      const { omega0, coulomb, viscous } = anim;
+
+      // Rigid-body wheel with two real loss mechanisms:
+      //   dω/dt = -(coulomb + viscous * ω)
+      // Coulomb friction gives a finite stop; viscous drag removes more energy at high speed.
+      const travelled =
+        (omega0 + coulomb / viscous) * (1 - Math.exp(-viscous * elapsed)) / viscous
+        - (coulomb / viscous) * elapsed;
+
+      w.rot = anim.from + travelled;
+      setRot(w);
+
+      if (elapsed >= anim.stopTime) {
+        // Snap only sub-pixel numerical drift, not the visible motion.
+        w.rot = anim.to;
+        setRot(w);
+        w.anim = null;
+        anim.resolve();
+      }
+    } else {
+      const p = Math.min(1, (now - anim.t0) / anim.dur);
+      w.rot = anim.from + (anim.to - anim.from) * p;
+      setRot(w);
+      if (p >= 1) { w.anim = null; anim.resolve(); }
+    }
   } else if (w.idle && !reducedMotion) {
     const dt = Math.min(0.1, (now - w.last) / 1000);
     w.rot = (w.rot + IDLE_DEG_PER_S * dt) % 360;
@@ -149,16 +174,71 @@ function ensureLoop(w) {
 }
 function setIdle(w, on) { w.idle = on; if (on) ensureLoop(w); }
 
+function stoppingDistance(omega0, coulomb, viscous) {
+  return omega0 / viscous
+    - (coulomb / (viscous * viscous)) * Math.log(1 + viscous * omega0 / coulomb);
+}
+
+function stoppingTime(omega0, coulomb, viscous) {
+  return Math.log(1 + viscous * omega0 / coulomb) / viscous;
+}
+
+function initialVelocityForDistance(distance, coulomb, viscous) {
+  // Monotonic equation, solved once per spin. This lets the physical model
+  // land exactly on the selected slice without altering its deceleration.
+  let lo = 0;
+  let hi = 720;
+  while (stoppingDistance(hi, coulomb, viscous) < distance) hi *= 1.5;
+
+  for (let i = 0; i < 48; i++) {
+    const mid = (lo + hi) / 2;
+    if (stoppingDistance(mid, coulomb, viscous) < distance) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
 function spinTo(w, index) {
   return new Promise((resolve) => {
     const step = 360 / w.N, mid = index * step + step / 2;
     const jitter = (Math.random() - 0.5) * step * 0.6;
     const targetMod = (((360 - mid - jitter) % 360) + 360) % 360;
     const cur = ((w.rot % 360) + 360) % 360;
-    let delta = targetMod - cur; if (delta < 0) delta += 360;
-    const turns = reducedMotion ? 1 : SPIN_TURNS + Math.floor(Math.random() * 2);
+    let delta = targetMod - cur;
+    if (delta < 0) delta += 360;
+
+    const turns = reducedMotion
+      ? 1
+      : SPIN_TURNS_MIN + Math.floor(Math.random() * (SPIN_TURNS_MAX - SPIN_TURNS_MIN + 1));
+    const distance = turns * 360 + delta;
+    const to = w.rot + distance;
+
     w.idle = false;
-    w.anim = { t0: performance.now(), dur: reducedMotion ? 900 : SPIN_MS, from: w.rot, to: w.rot + turns * 360 + delta, resolve };
+
+    if (reducedMotion) {
+      w.anim = {
+        kind: "linear",
+        t0: performance.now(),
+        dur: 700,
+        from: w.rot,
+        to,
+        resolve,
+      };
+    } else {
+      const omega0 = initialVelocityForDistance(distance, COULOMB_DECEL, VISCOUS_DRAG);
+      w.anim = {
+        kind: "physics",
+        t0: performance.now(),
+        from: w.rot,
+        to,
+        omega0,
+        coulomb: COULOMB_DECEL,
+        viscous: VISCOUS_DRAG,
+        stopTime: stoppingTime(omega0, COULOMB_DECEL, VISCOUS_DRAG),
+        resolve,
+      };
+    }
+
     ensureLoop(w);
   });
 }
