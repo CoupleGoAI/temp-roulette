@@ -4,14 +4,14 @@
 
 // Challenge wheel. `wheel` is the short label on the wheel (optional; defaults to title).
 const CHALLENGES = [
-  { title: "Mirror Me",        tag: "Quick",   seconds: 20, text: "One moves slowly, the other copies like a mirror. Switch halfway." },
-  { title: "Team Countdown",   tag: "Focus",   seconds: 20, text: "Count from 1 to 20 out loud, one number each, taking turns. Mess up? Start over." },
-  { title: "Copy My Face",     tag: "Silly",   seconds: 20, text: "One pulls a face, the other copies it exactly. New face every 3 seconds." },
-  { title: "Secret Handshake", tag: "Team",    seconds: 30, text: "Invent a 5-move secret handshake and perform it twice without a mistake." },
-  { title: "Back to Back",     tag: "Balance", seconds: 20, text: "Stand back to back, link arms, sit down to the floor and stand up again together." },
-  { title: "Team Alphabet",    tag: "Focus",   seconds: 20, text: "Say the alphabet together, alternating letters, as fast as you can." },
-  { title: "Who Knows Who?",   tag: "Know",    seconds: 25, text: "Name your partner's favourite food, song and childhood hero. Three answers each." },
-  { title: "Blind High Five",  tag: "Trust",   seconds: 15, text: "Close your eyes, take three steps apart, turn around and high five on the first try." },
+  { title: "Mirror Me",        tag: "Quick",   text: "One of you moves slowly while the other copies like a mirror. Then switch roles." },
+  { title: "Team Countdown",   tag: "Focus",   text: "Count from 1 to 20 out loud, one number each, taking turns. Mess up? Start over." },
+  { title: "Copy My Face",     tag: "Silly",   text: "Take turns pulling three different faces while your partner copies each one exactly." },
+  { title: "Secret Handshake", tag: "Team",    text: "Invent a 5-move secret handshake and perform it twice without a mistake." },
+  { title: "Back to Back",     tag: "Balance", text: "Stand back to back, link arms, sit down to the floor and stand up again together." },
+  { title: "Team Alphabet",    tag: "Focus",   text: "Say the alphabet together, alternating letters, as fast as you can." },
+  { title: "Who Knows Who?",   tag: "Know",    text: "Name your partner's favourite food, song and childhood hero. Three answers each." },
+  { title: "Blind High Five",  tag: "Trust",   text: "Close your eyes, take three steps apart, turn around and high five on the first try." },
 ];
 
 
@@ -252,7 +252,7 @@ function clearHighlight(w) {
 }
 
 /* ─── State & screens ─── */
-const state = { challengeIndex: null, lastChallengeIndex: -1, timer: null, busy: false };
+const state = { challengeIndex: null, lastChallengeIndex: -1, busy: false };
 
 const challengeWheel = buildWheel($("challengeWheel"), CHALLENGES);
 
@@ -284,77 +284,21 @@ $("spinChallengeBtn").addEventListener("click", async () => {
   state.busy = false;
 });
 
-/* ─── 2 · Challenge + timer ─── */
-const timerEl = $("timer"), ringEl = $("timerRing"), numEl = $("timerNum"), hintEl = $("timerHint"), primaryEl = $("chPrimary");
-const RING = 2 * Math.PI * 88;
-
+/* ─── 2 · Challenge ─── */
 function openChallenge(ch) {
-  stopTimer();
-  $("chBadge").textContent = `${ch.tag || "Challenge"} · ${ch.seconds} seconds`;
+  $("chBadge").textContent = ch.tag ? `Your challenge · ${ch.tag}` : "Your challenge";
   $("chTitle").textContent = ch.title;
   $("chText").textContent = ch.text;
-  timerEl.classList.remove("is-urgent", "is-done");
-  ringEl.style.strokeDashoffset = 0;
-  numEl.textContent = ch.seconds;
-  hintEl.textContent = "Ready? Tap start when you both are.";
-  primaryEl.textContent = "Start the timer";
-  primaryEl.dataset.mode = "start";
   showScreen("screen-challenge");
 }
 
-function startTimer(seconds) {
-  const t0 = performance.now();
-  let lastShown = seconds;
-  const loop = (now) => {
-    const remaining = Math.max(0, seconds - (now - t0) / 1000);
-    ringEl.style.strokeDashoffset = RING * (1 - remaining / seconds);
-    const shown = Math.ceil(remaining);
-    if (shown !== lastShown) {
-      lastShown = shown;
-      numEl.textContent = shown;
-      if (shown <= 5 && shown > 0) {
-        timerEl.classList.add("is-urgent");
-        numEl.classList.remove("beat"); void numEl.offsetWidth; numEl.classList.add("beat");
-      }
-    }
-    if (remaining > 0) state.timer = requestAnimationFrame(loop);
-    else finishTimer();
-  };
-  state.timer = requestAnimationFrame(loop);
-}
-function stopTimer() { if (state.timer) cancelAnimationFrame(state.timer); state.timer = null; }
-function finishTimer() {
-  state.timer = null;
-  timerEl.classList.remove("is-urgent");
-  timerEl.classList.add("is-done");
-  numEl.textContent = "Time's up!";
-  hintEl.textContent = "Did you make it? Spin again whenever you are ready.";
-  primaryEl.textContent = "Done — spin again ✨";
-  primaryEl.dataset.mode = "done";
-}
-
-primaryEl.addEventListener("click", () => {
-  if (primaryEl.dataset.mode === "start") {
-    const ch = CHALLENGES[state.challengeIndex];
-    hintEl.textContent = "Go! You've got this.";
-    primaryEl.textContent = "Done — spin again ✨";
-    primaryEl.dataset.mode = "done";
-    startTimer(ch.seconds);
-  } else {
-    stopTimer();
-    clearHighlight(challengeWheel);
-    showScreen("screen-spin");
-  }
-});
 $("chSkip").addEventListener("click", () => {
-  stopTimer();
   clearHighlight(challengeWheel);
   showScreen("screen-spin");
 });
 
 /* ─── Reset ─── */
 function resetAll() {
-  stopTimer();
   state.challengeIndex = null;
   state.busy = false;
   clearHighlight(challengeWheel);
