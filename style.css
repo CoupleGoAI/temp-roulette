@@ -322,7 +322,7 @@
   }
   @media (max-height: 560px) {
     :root { --wheel: min(70vw, calc(100vh - 230px), 640px); }
-    .lead { display: none; }
+    #screen-spin > .lead { display: none; }
   }
 
   @media (prefers-reduced-motion: reduce) {
