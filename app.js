@@ -19,8 +19,9 @@ const SPIN_TURNS_MIN = 5;       // minimum full rotations before landing
 const SPIN_TURNS_MAX = 6;       // maximum full rotations before landing
 const COULOMB_DECEL = 36;       // deg/s²: bearing friction, dominant near the end
 const VISCOUS_DRAG = 0.55;      // 1/s: speed-proportional drag, dominant while spinning fast
-const LAND_PAUSE_MS = 1100;     // how long the winning slice is highlighted before moving on
-const IDLE_DEG_PER_S = 5;       // slow attract rotation while waiting
+const LAND_PAUSE_MS = 1050;     // celebration moment before the challenge card
+const SPIN_FAILSAFE_MS = 6500;   // never leave the kiosk stuck on a disabled spin button
+const IDLE_DEG_PER_S = 5;        // slow attract rotation while waiting
 
 /* ═══════════════════════════════════════════════════════════════════ */
 
@@ -174,6 +175,15 @@ function ensureLoop(w) {
 }
 function setIdle(w, on) { w.idle = on; if (on) ensureLoop(w); }
 
+function finishSpinNow(w) {
+  if (!w.anim) return;
+  const anim = w.anim;
+  w.rot = anim.to;
+  setRot(w);
+  w.anim = null;
+  anim.resolve();
+}
+
 function stoppingDistance(omega0, coulomb, viscous) {
   return omega0 / viscous
     - (coulomb / (viscous * viscous)) * Math.log(1 + viscous * omega0 / coulomb);
@@ -269,19 +279,53 @@ function showScreen(id) {
 /* ─── 1 · Challenge spin ─── */
 $("spinChallengeBtn").addEventListener("click", async () => {
   if (state.busy) return;
+
   state.busy = true;
-  $("spinChallengeBtn").disabled = true;
+  const button = $("spinChallengeBtn");
+  button.disabled = true;
   clearHighlight(challengeWheel);
+
   let idx;
-  do { idx = Math.floor(Math.random() * CHALLENGES.length); } while (CHALLENGES.length > 1 && idx === state.lastChallengeIndex);
-  await spinTo(challengeWheel, idx);
-  highlight(challengeWheel, idx);
-  state.challengeIndex = idx;
-  state.lastChallengeIndex = idx;
-  await wait(LAND_PAUSE_MS);
-  openChallenge(CHALLENGES[idx]);
-  $("spinChallengeBtn").disabled = false;
-  state.busy = false;
+  do {
+    idx = Math.floor(Math.random() * CHALLENGES.length);
+  } while (CHALLENGES.length > 1 && idx === state.lastChallengeIndex);
+
+  try {
+    await Promise.race([
+      spinTo(challengeWheel, idx),
+      wait(SPIN_FAILSAFE_MS),
+    ]);
+
+    // If a browser throttled animation frames, force the wheel to its exact landing point.
+    finishSpinNow(challengeWheel);
+
+    const challenge = CHALLENGES[idx];
+    highlight(challengeWheel, idx);
+    state.challengeIndex = idx;
+    state.lastChallengeIndex = idx;
+
+    const wheelRect = document.querySelector(".wheel-wrap").getBoundingClientRect();
+    window.burstConfetti?.({
+      x: wheelRect.left + wheelRect.width / 2,
+      y: wheelRect.top + wheelRect.height * 0.36,
+    });
+    window.showWinnerMoment?.(challenge.title);
+
+    const wrap = document.querySelector(".wheel-wrap");
+    wrap.classList.remove("is-celebrating");
+    void wrap.offsetWidth;
+    wrap.classList.add("is-celebrating");
+
+    await wait(LAND_PAUSE_MS);
+    wrap.classList.remove("is-celebrating");
+    openChallenge(challenge);
+  } catch (error) {
+    console.error("Spin failed", error);
+    openChallenge(CHALLENGES[idx]);
+  } finally {
+    button.disabled = false;
+    state.busy = false;
+  }
 });
 
 /* ─── 2 · Challenge ─── */
