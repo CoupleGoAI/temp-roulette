@@ -12,9 +12,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
+<canvas id="grainientBg" class="grainient-bg" aria-hidden="true"></canvas>
+<div class="background-vignette" aria-hidden="true"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<div class="winner-moment" id="winnerMoment" aria-hidden="true">
+  <span>Challenge selected</span>
+  <strong id="winnerMomentTitle">Mirror Me</strong>
+</div>
+
 <div class="app">
   <header class="top">
     <div class="brand"><img alt="CoupleGoAI logo"><span>CoupleGoAI</span></div>
@@ -67,6 +76,7 @@
     </section>
   </main>
 </div>
-<script src="app.js"></script>
+<script src="effects.js?v=6"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>
