@@ -18,20 +18,21 @@
     --grad-action: linear-gradient(135deg, #b94f70 0%, #8f4aaa 100%);
     --grad-brand: linear-gradient(135deg, #f48ba6 0%, #cc7be8 100%);
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
-    --wheel: min(90vw, calc(100vh - 220px), 780px);
+    --wheel: min(88vw, calc(100vh - 255px), 790px);
     --font-ui: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
     --font-display: "Fraunces", "Nunito Sans", Georgia, serif;
   }
   @supports (height: 100dvh) {
-    :root { --wheel: min(90vw, calc(100dvh - 220px), 780px); }
+    :root { --wheel: min(88vw, calc(100dvh - 255px), 790px); }
   }
 
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
   html { height: 100%; }
   body {
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
     background:
       radial-gradient(circle at 12% 8%, rgba(244, 139, 166, 0.20), transparent 42%),
       radial-gradient(circle at 88% 92%, rgba(204, 123, 232, 0.18), transparent 44%),
@@ -44,7 +45,7 @@
     -webkit-tap-highlight-color: transparent;
     -webkit-user-select: none;
     user-select: none;
-    overflow-x: hidden;
+    overflow: hidden;
   }
   button { font: inherit; color: inherit; }
   :focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
@@ -72,8 +73,9 @@
   .app {
     position: relative;
     z-index: 2;
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     padding: max(14px, env(safe-area-inset-top)) 24px max(18px, env(safe-area-inset-bottom));
@@ -115,8 +117,33 @@
   .btn-ghost:active { transform: scale(0.97); }
 
   /* ─── Stage / screens ─── */
-  .stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .screen { display: none; width: 100%; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+  .stage {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  .screen {
+    display: none;
+    width: 100%;
+    min-height: 0;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+  }
+  #screen-spin {
+    flex: 1;
+    justify-content: flex-start;
+    padding-top: clamp(0px, 0.8vh, 8px);
+  }
+  #screen-challenge {
+    flex: 1;
+    justify-content: center;
+  }
   .screen.is-active { display: flex; animation: screenIn 450ms var(--ease) both; }
   @keyframes screenIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
@@ -131,18 +158,26 @@
   }
   .lead { margin: 0; color: var(--text-muted); font-size: clamp(1rem, 1.8vw, 1.2rem); line-height: 1.55; max-width: 44em; text-wrap: pretty; }
   .spin-title {
-    font-size: clamp(1.65rem, 3vw, 2.35rem);
-    line-height: 1.02;
+    font-size: clamp(1.55rem, 2.7vw, 2.15rem);
+    line-height: 1;
+    margin-top: -2px;
   }
   .spin-lead {
-    font-size: clamp(0.88rem, 1.25vw, 1rem);
-    line-height: 1.4;
-    max-width: 48em;
+    font-size: clamp(0.82rem, 1.05vw, 0.94rem);
+    line-height: 1.35;
+    max-width: 46em;
+    opacity: 0.9;
   }
   .fine { margin: 0; color: rgba(255,255,255,0.5); font-size: 0.85rem; }
 
   /* ─── Wheel ─── */
-  .wheel-wrap { position: relative; width: var(--wheel); height: var(--wheel); margin: 2px 0 2px; }
+  .wheel-wrap {
+    position: relative;
+    flex: 0 0 auto;
+    width: var(--wheel);
+    height: var(--wheel);
+    margin: 0;
+  }
   .wheel-wrap::after {
     content: "";
     position: absolute;
@@ -200,6 +235,76 @@
   .wheel-rot.has-win path.is-win { filter: brightness(1.22) saturate(1.1); }
 
   /* ─── Buttons ─── */
+  .spin-cta {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: clamp(250px, 24vw, 330px);
+    min-height: 56px;
+    padding: 0 42px;
+    margin-top: 2px;
+    border: 2px solid transparent;
+    border-radius: 999px;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    background:
+      linear-gradient(180deg, rgba(50,31,74,0.98), rgba(36,22,56,0.98)) padding-box,
+      linear-gradient(110deg, #f48ba6 0%, #cc7be8 55%, #f9b5c8 100%) border-box;
+    box-shadow:
+      0 12px 30px rgba(9, 4, 18, 0.34),
+      0 0 24px rgba(204, 123, 232, 0.18),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+    transition:
+      transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 220ms ease,
+      background 220ms ease,
+      opacity 180ms ease;
+  }
+
+  .spin-cta::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(110deg, transparent 18%, rgba(255,255,255,0.07) 50%, transparent 82%);
+    opacity: 0.65;
+  }
+
+  .spin-cta > span {
+    position: relative;
+    z-index: 1;
+  }
+
+  .spin-cta:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 15px 34px rgba(9, 4, 18, 0.38),
+      0 0 30px rgba(244, 139, 166, 0.24),
+      0 0 22px rgba(204, 123, 232, 0.20),
+      inset 0 1px 0 rgba(255,255,255,0.10);
+  }
+
+  .spin-cta:active {
+    transform: translateY(0) scale(0.985);
+  }
+
+  .spin-cta[disabled] {
+    opacity: 0.58;
+    cursor: default;
+    transform: none;
+  }
+
+  .back-to-wheel {
+    min-width: 180px;
+    color: rgba(255,255,255,0.82);
+  }
+
+
   /* Exact AppBetaCTA treatment from CoupleGoAI/landing. */
   .app-beta-cta {
     position: relative;
@@ -470,16 +575,21 @@
     .brand span { display: none; }
     .app { padding-left: 16px; padding-right: 16px; }
     .btn-primary { min-height: 58px; padding: 0 34px; font-size: 1.15rem; width: min(100%, 420px); }
-    .app-beta-cta { min-height: 46px; padding: 0 20px; font-size: 0.86rem; }
+    .spin-cta {
+      min-width: min(78vw, 300px);
+      min-height: 54px;
+      padding: 0 30px;
+      font-size: 0.96rem;
+    }
   }
-  @media (max-height: 560px) {
-    :root { --wheel: min(82vw, calc(100vh - 150px), 720px); }
+  @media (max-height: 700px) {
+    :root { --wheel: min(82vw, calc(100dvh - 205px), 700px); }
     #screen-spin > .lead { display: none; }
+    #screen-spin { gap: 6px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .app-beta-cta::before,
-    .app-beta-cta::after { animation: none; }
+
     .winner-moment.is-active,
     .wheel-wrap.is-celebrating,
     .wheel-wrap.is-celebrating::after,
